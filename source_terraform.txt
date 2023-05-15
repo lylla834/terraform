@@ -1,5 +1,9 @@
 TERRAFORM
 
+https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources
+
+https://registry.terraform.io/providers/hashicorp/random/latest/docs
+
 https://learn.microsoft.com/fr-fr/azure/developer/terraform/create-resource-group?tabs=azure-cli
 
 
@@ -11,3 +15,81 @@ resource "azurerm_resource_group" "rg" {
   location = var.resource_group_location
   name     = random_pet.rg_name.id
 }
+
+
+
+
+creation vm
+
+resource "azurerm_resource_group" "vmlyllaterraform" {
+  name     = "vmlylla-resources"
+  location = "West Europe"
+}
+
+resource "azurerm_virtual_network" "vnetterralylla" {
+  name                = "terralylla-network"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+
+resource "azurerm_subnet" "lyllasubnet" {
+  name                 = "internal"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefixes     = ["10.0.2.0/24"]
+}
+
+resource "azurerm_network_interface" "example" {
+  name                = "example-nic"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+resource "azurerm_linux_virtual_machine" "example" {
+  name                = "example-machine"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  size                = "Standard_F2"
+  admin_username      = "adminuser"
+  network_interface_ids = [
+    azurerm_network_interface.example.id,
+  ]
+
+  admin_ssh_key {
+    username   = "adminuser"
+    public_key = file("~/.ssh/id_rsa.pub")
+  }
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
+  }
+}
+
+VARIABLES
+
+variable "resource_group_location" {
+  default     = "westeurope"
+  description = "Location of the resource group."
+}
+
+variable "resource_group_name_prefix" {
+  default     = "rg"
+  description = "Prefix of the resource group name that's combined with a random ID so name is unique in your Azure subscription."
+}
+
+terraform plan -out mainlylla.tfplan
